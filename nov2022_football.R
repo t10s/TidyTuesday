@@ -23,7 +23,7 @@ compl_set <- compl_set %>% mutate(Year = case_when(
   Season_End_Year <= 2002 ~ "1993-2002",
   Season_End_Year >= 2003 & Season_End_Year <= 2012 ~ "2003-2012",
   Season_End_Year >= 2013 ~ "2013-2022"))
-compl_set <- compl_set %>% mutate(team = replace(team, team == "Manchester City", "M. City"))
+compl_set <- compl_set %>% mutate(team = replace(team, team == "Manchester Utd", "M. Utd"))
 lvl_order <- c("home", "away")
 
 #plot
@@ -37,5 +37,7 @@ ggplot(compl_set, aes(x = team, y = diff)) +
   theme(panel.spacing.x = unit(1.3,"line")) +
   ylab("Goal Difference") + xlab("Club")+
   labs(col='Legend') +
-  theme(strip.text.x = element_text(size = 15))
+  theme(strip.text.x = element_text(size = 15)) +
+  ggtitle("Goal Difference for Home and Away games from 1993 - Nov. 2022") +
+  theme(plot.title = element_text(hjust = .5))
 

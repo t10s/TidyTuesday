@@ -1,6 +1,7 @@
 setwd("C:/Users/tarin/Documents/TidyTuesday/Datasets/2022oct")
 
 library(tidyverse)
+library(ggridges)
 
 dat <- read.csv("yarn.csv")
 
@@ -24,7 +25,7 @@ data_means_ <- data_means %>% mutate(group=case_when(yardage_1 <= 117 ~ "<=117",
                                       yardage_1 >= 280 & yardage_1 <= 312 ~ "280:312",
                                       yardage_1 >= 313 ~ ">=313")) %>%
   na.omit()
-colnames(data_means_)[6] <- "Yardage"
+colnames(data_means_)[5] <- "Yardage"
 #roundabout way to selectively label
 data_means_ <- data_means_ %>% mutate(group2=case_when(rating_average_1 >= 4.5 | rating_average_1 <= 3 ~ "lab",
                                                       rating_average_1 <= 4.44 | rating_average_1 >= 3.1 ~ "nolab"))
@@ -35,9 +36,9 @@ lvl_order <- c("<=117", "117:279", "280:312", ">=313")
 
 #plot
 ggplot(data_means_, aes(x = yarn_weight_name, y = rating_average_1)) +
-  geom_point(aes(colour = factor(Yardage, levels = lvl_order)), alpha = .5, position =position_jitterdodge()) +
-  guides(colour=guide_legend(title=" Yardage Legend")) +
-  geom_text(data=subset(data_means_, group2 == "lab"), aes(x = yarn_weight_name, y = rating_average_1, label=CompanyName, colour = Yardage),
+  geom_point(aes(colour = Yardage), alpha = .5, position = position_jitter(seed=1, width = .2)) +
+  #guides(colour=guide_legend(title=" Yardage Legend")) +
+  geom_text(data=subset(data_means_, group2 == "lab"), aes(x = yarn_weight_name, y = rating_average_1, label=CompanyName),
             size = 2.5, nudge_x = .05, nudge_y = .05, check_overlap = TRUE, show.legend = FALSE) +
   theme_minimal() +
   theme(axis.line = element_line(colour = "black", size = 1)) +
@@ -48,3 +49,15 @@ ggplot(data_means_, aes(x = yarn_weight_name, y = rating_average_1)) +
   theme(plot.title = element_text(hjust=.5, vjust = 2.5, size = 15),
         plot.subtitle = element_text(hjust =.5, size = 13)) 
   
+
+
+#plot ggridges
+ggplot(data_means_, aes(rating_average_1, Yardage, fill = stat(x))) +
+  geom_density_ridges_gradient(show.legend = FALSE) +
+  scale_fill_viridis_c(name = "Average Rating", option = "C") +
+  xlab("Ratings Rating") + ylab("Yardage") +
+  theme_minimal() +
+  theme(axis.line = element_line(colour = "black", size = 1)) +
+  ggtitle("Ratings for Different Yardages") +
+  theme(plot.title = element_text(hjust = .5))
+

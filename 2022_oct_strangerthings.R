@@ -1,5 +1,3 @@
-setwd("C:/Users/tarin/Documents/TidyTuesday/Datasets/2022oct/oct_18")
-
 library(tidyverse)
 library(wesanderson)
 

@@ -4,7 +4,15 @@ library(tidyverse)
 stat_stns <- read.csv("state_stations.csv")
 stn_info <- read.csv("station_info.csv")
 stn_contour <- read.csv("FM_service_contour_current.txt", sep = "|")
-xref <- read.csv("xref_cdbs_lm_app_id_transfer.dat", sep = "|") #downloaded extra from FCC site (https://enterpriseefiling.fcc.gov/dataentry/public/tv/lmsDatabase.html)
+fmq <- read.csv("fmq", sep = "|", header = FALSE)
+fmq_slim <- select(fmq, c(2,11,38,39))
+colnames(fmq_slim)[3] <- "application_id"
+colnames(fmq_slim)[4] <- "lms_application_id"
+stn_contour_xref <- inner_join(fmq_slim, stn_contour, by="application_id") %>%
+  filter(V2 != "-           ")
+colnames(stn_contour_xref)[1] <- "Call Sign"
+colnames(stn_contour_xref)[2] <- "City"
+map <- map_data("state")
 
 #join dfs
 stn_info_all <- inner_join(stat_stns, stn_info, by = "call_sign")
@@ -21,15 +29,30 @@ stn_info_all <- stn_info_all %>%  mutate(type = case_when(str_detect(format, pas
   na.omit(type)
 
 #join map
-colnames(stn_info_all)[6] <- "region"
-stn_info_all <- stn_info_all %>% mutate(region = tolower(region))
-map_stn <- inner_join(map, stn_info_all)
+colnames(stat_stns)[6] <- "region"
+stat_stns <- mutate(stat_stns, region = tolower(region))
 
-ggplot(map_stn, aes(x = long, y = lat) +
-         geom_polygon(aes(group = group, fill = city)))
+#split lat and long to sep cols
+x <- stn_contour_xref[8]
+x <- x %>% 
+  mutate(transmitter_site = str_sub(transmitter_site, 1,-1)) %>% 
+  separate(transmitter_site, into = c('lat', 'long'), sep = ',')
+
+y <- select(stn_contour_xref, c(1,2,8))
+y <- y %>% 
+  mutate(transmitter_site = str_sub(transmitter_site, 1,-1)) %>% 
+  separate(transmitter_site, into = c('lat', 'long'), sep = ',')
+y <- transform(y, long = as.numeric(long))
+y <- transform(y, lat = as.numeric(lat))
+
+
+ggplot() +
+  geom_polygon(data = map, aes(x=long, y=lat, group=group), colour = "black") +
+  coord_map() +
+  geom_point(data = y, aes(x=long, y=lat), colour = "red") +
+  theme_minimal()
 
 
 
-#cross ref ids - figure out how to plot contours!!
 
 

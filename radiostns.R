@@ -5,14 +5,21 @@ stat_stns <- read.csv("state_stations.csv")
 stn_info <- read.csv("station_info.csv")
 stn_contour <- read.csv("FM_service_contour_current.txt", sep = "|")
 fmq <- read.csv("fmq", sep = "|", header = FALSE)
-fmq_slim <- select(fmq, c(2,11,38,39))
-colnames(fmq_slim)[3] <- "application_id"
-colnames(fmq_slim)[4] <- "lms_application_id"
-stn_contour_xref <- inner_join(fmq_slim, stn_contour, by="application_id") %>%
-  filter(V2 != "-           ")
-colnames(stn_contour_xref)[1] <- "Call Sign"
-colnames(stn_contour_xref)[2] <- "City"
+fmq_slim <- select(fmq, c(2,38,39))
+fmq_slim <- fmq_slim %>% mutate(across(where(is.character), str_trim)) #remove whitespace from char type
+colnames(fmq_slim)[1] <- "call_sign"
+colnames(fmq_slim)[2] <- "application_id"
+colnames(fmq_slim)[3] <- "lms_application_id"
+
+stn_contour_slim <- select(stn_contour, c(1,2,3,8))
+colnames(stn_contour_slim)[4] <- "transmitter_site"
+
+stn_contour_xref <- merge(fmq_slim, stn_contour_slim, by = "application_id") %>%
+  filter(call_sign != "-           ")
+stn_contour_xref_slim <- select(stn_contour_xref, c(2,6))
+
 map <- map_data("state")
+
 
 #join dfs
 stn_info_all <- inner_join(stat_stns, stn_info, by = "call_sign")
@@ -28,28 +35,24 @@ stn_info_all <- stn_info_all %>%  mutate(type = case_when(str_detect(format, pas
                                                           str_detect(format, paste0(pop_rock, collapse = "|")) ~ "Rock/Pop/Mainstream")) %>%
   na.omit(type)
 
-#join map
-colnames(stat_stns)[6] <- "region"
-stat_stns <- mutate(stat_stns, region = tolower(region))
+#join coordinates with station type data
+q <- left_join(stn_contour_xref_slim, stn_info_all, by = "call_sign") %>% 
+  na.omit() %>%
+  select(c(1,2,4,7,13))
 
 #split lat and long to sep cols
-x <- stn_contour_xref[8]
-x <- x %>% 
+x <- q %>% 
   mutate(transmitter_site = str_sub(transmitter_site, 1,-1)) %>% 
   separate(transmitter_site, into = c('lat', 'long'), sep = ',')
-
-y <- select(stn_contour_xref, c(1,2,8))
-y <- y %>% 
-  mutate(transmitter_site = str_sub(transmitter_site, 1,-1)) %>% 
-  separate(transmitter_site, into = c('lat', 'long'), sep = ',')
-y <- transform(y, long = as.numeric(long))
-y <- transform(y, lat = as.numeric(lat))
+x$long <- as.numeric(x$long)
+x$lat <- as.numeric(x$lat)
+x <- x %>% filter(long >= -130)
 
 
 ggplot() +
-  geom_polygon(data = map, aes(x=long, y=lat, group=group), colour = "black") +
+  geom_polygon(data = map, aes(x=long, y=lat, group=group), col = "black", alpha = 0) +
   coord_map() +
-  geom_point(data = y, aes(x=long, y=lat), colour = "red") +
+  geom_point(data = x, aes(x=long, y=lat, colour = type)) +
   theme_minimal()
 
 

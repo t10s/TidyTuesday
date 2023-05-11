@@ -2,7 +2,6 @@
 
 library(tidyverse)
 library(mapdata)
-library(ggmap) #for theme_nothing()
 library(cowplot)
 
 #read data

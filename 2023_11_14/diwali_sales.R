@@ -3,6 +3,7 @@
 # load packages
 library(tidyverse)
 library(sf)
+library(ggimage)
 
 
 # read in the data
@@ -39,7 +40,7 @@ ggplot(map_data) +
   theme_void() +
   scale_fill_continuous(low="yellow", high="orange") +
   theme(legend.direction = "horizontal",
-        legend.position = c(0.8, 0.4),
+        legend.position = c(0.8, 0.45),
         legend.title = element_blank(),
         plot.title = element_text(size=20, hjust=.5, face = "bold")) +
   labs(title = "Diwali Spending per State") +

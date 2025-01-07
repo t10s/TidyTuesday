@@ -1,0 +1,55 @@
+---
+title: "nhl_players_births"
+output: html_document
+date: "2025-01-07"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+load packages
+```{r}
+library(readr)
+library(tidyverse)
+library(ggplot2)
+
+```
+
+load data
+```{r}
+canada_births_1991_2022 <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2024/2024-01-09/canada_births_1991_2022.csv')
+nhl_player_births <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2024/2024-01-09/nhl_player_births.csv')
+nhl_rosters <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2024/2024-01-09/nhl_rosters.csv')
+nhl_teams <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2024/2024-01-09/nhl_teams.csv')
+```
+
+aggregate data
+```{r}
+births_month <- nhl_player_births |>
+  group_by(birth_month) |>
+  summarise(total = n())
+
+nhl_player_births <- nhl_player_births |>
+  mutate(decade = case_when(birth_year > 1899 & birth_year <1910 ~ "1900s",
+                            birth_year > 1909 & birth_year <1920 ~ "1910s",
+                            birth_year > 1919 & birth_year <1930 ~ "1920s",
+                            birth_year > 1929 & birth_year <1940 ~ "1930s",
+                            birth_year > 1939 & birth_year <1950 ~ "1940s",
+                            birth_year > 1949 & birth_year <1960 ~ "1950s",
+                            birth_year > 1959 & birth_year <1971 ~ "1960s",
+                            birth_year > 1969 & birth_year <1981 ~ "1970s",
+                            birth_year > 1979 & birth_year <1991 ~ "1980s",
+                            birth_year > 1989 & birth_year <2001 ~ "1990s",
+                            birth_year > 1999 & birth_year <2011 ~ "2000s",
+                            birth_year < 1900 ~ "before 1900s")) 
+
+births_year <- nhl_player_births |>
+  group_by(birth_year) |>
+  summarise(total = n())
+
+births_decade <- nhl_player_births |>
+  group_by(decade) |>
+  summarise(total = n())
+```
+
